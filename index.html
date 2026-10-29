@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyCloudLab</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #f0f5ff;
+      color: #172554;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      padding: 36px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px #17255415;
+      text-align: center;
+    }
+
+    .cloud {
+      font-size: 52px;
+    }
+
+    h1 {
+      margin-bottom: 12px;
+      font-size: 36px;
+    }
+
+    p {
+      color: #52627c;
+      line-height: 1.6;
+    }
+
+    button {
+      margin-top: 16px;
+      padding: 13px 22px;
+      border: 0;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    #message {
+      margin-top: 18px;
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="cloud">☁️</div>
+    <h1>MyCloudLab</h1>
+    <p>Welcome to my first cloud learning project!</p>
+    <p>I'm learning how websites, webservers and cloud databases work together.</p>
+
+    <button id="testButton">Test My Website</button>
+    <p id="message">Website is ready for testing.</p>
+  </main>
+
+  <script>
+    const button = document.getElementById("testButton");
+    const message = document.getElementById("message");
+
+    button.addEventListener("click", function () {
+      message.textContent =
+        "Success! Your website's JavaScript is working.";
+    });
+  </script>
+</body>
+</html>
