@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyCloudLab</title>
+
   <style>
     * {
       box-sizing: border-box;
@@ -45,6 +46,15 @@
       line-height: 1.6;
     }
 
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-top: 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
     button {
       margin-top: 16px;
       padding: 13px 22px;
@@ -60,32 +70,309 @@
       background: #1d4ed8;
     }
 
-    #message {
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #status {
       margin-top: 18px;
       font-weight: bold;
       overflow-wrap: anywhere;
     }
+
+    .messages {
+      margin-top: 28px;
+      text-align: left;
+    }
+
+    .messages h2 {
+      font-size: 21px;
+      text-align: center;
+    }
+
+    .message-item {
+      background: #f0f5ff;
+      padding: 14px;
+      margin-top: 12px;
+      border-radius: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .message-date {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #64748b;
+    }
   </style>
 </head>
-<body>
-  <main class="card">
-    <div class="cloud">☁️</div>
-    <h1>MyCloudLab</h1>
-    <p>Welcome to my first cloud learning project!</p>
-    <p>I'm learning how websites, webservers and cloud databases work together.</p>
 
-    <button id="testButton">Test My Website</button>
-    <p id="message">Website is ready for testing.</p>
+<body>
+
+  <main class="card">
+
+    <div class="cloud">☁️</div>
+
+    <h1>MyCloudLab</h1>
+
+    <p>Welcome to MyCloudLab!</p>
+
+    <p>
+      Send messages, store them in the cloud,
+      and retrieve them whenever you want.
+    </p>
+
+    <form id="messageForm">
+
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Enter your message..."
+        maxlength="1000"
+        required
+      >
+
+      <button type="submit" id="sendButton">
+        Save Message
+      </button>
+
+    </form>
+
+    <p id="status" aria-live="polite">
+      Connecting to cloud database...
+    </p>
+
+    <section class="messages">
+
+      <h2>☁️ Saved Cloud Messages</h2>
+
+      <div id="messageList">
+        Loading messages...
+      </div>
+
+      <button id="refreshButton" type="button">
+        Refresh Messages
+      </button>
+
+    </section>
+
   </main>
 
   <script>
-    const button = document.getElementById("testButton");
-    const message = document.getElementById("message");
 
-    button.addEventListener("click", function () {
-      message.textContent =
-        "Success! Your website's JavaScript is working.";
+    // SUPABASE CONFIGURATION
+
+    const SUPABASE_URL =
+      "https://gpirhvzvfyllpiksarvn.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      "sb_publishable_pAwNjS50OJzs808Sj42XXA_FV_yWC6s";
+
+    const TABLE_NAME = "my-first-cloud";
+
+
+    // HTML ELEMENTS
+
+    const form = document.getElementById("messageForm");
+
+    const input = document.getElementById("messageInput");
+
+    const status = document.getElementById("status");
+
+    const messageList = document.getElementById("messageList");
+
+    const sendButton = document.getElementById("sendButton");
+
+    const refreshButton = document.getElementById("refreshButton");
+
+
+    // SUPABASE REST API
+
+    const API_URL =
+      `${SUPABASE_URL}/rest/v1/${TABLE_NAME}`;
+
+    const headers = {
+      "apikey": SUPABASE_PUBLISHABLE_KEY,
+      "Content-Type": "application/json"
+    };
+
+
+    // CHECK CONFIGURATION
+
+    if (
+      SUPABASE_PUBLISHABLE_KEY ===
+      "PASTE_YOUR_PUBLISHABLE_KEY_HERE"
+    ) {
+      status.textContent =
+        "Please add your Supabase publishable key.";
+
+      sendButton.disabled = true;
+    } else {
+
+      loadMessages();
+
+    }
+
+
+    // SAVE MESSAGE TO SUPABASE
+
+    form.addEventListener("submit", async function(event) {
+
+      event.preventDefault();
+
+      const message = input.value.trim();
+
+      if (!message) {
+        status.textContent = "Please enter a message.";
+        return;
+      }
+
+      sendButton.disabled = true;
+
+      status.textContent = "Saving message to cloud...";
+
+      try {
+
+        const response = await fetch(API_URL, {
+
+          method: "POST",
+
+          headers: {
+            ...headers,
+            "Prefer": "return=minimal"
+          },
+
+          body: JSON.stringify({
+            message: message
+          })
+
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error);
+        }
+
+        input.value = "";
+
+        status.textContent =
+          "Success! Message saved to Supabase.";
+
+        await loadMessages();
+
+      } catch(error) {
+
+        console.error("Save error:", error);
+
+        status.textContent =
+          "Failed to save: " + error.message;
+
+      } finally {
+
+        sendButton.disabled = false;
+
+      }
+
     });
+
+
+    // LOAD MESSAGES FROM SUPABASE
+
+    async function loadMessages() {
+
+      messageList.textContent = "Loading messages...";
+
+      try {
+
+        const response = await fetch(
+          API_URL +
+          "?select=id,message,created_at&order=created_at.desc",
+          {
+            method: "GET",
+            headers: headers
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error);
+        }
+
+        const messages = await response.json();
+
+        displayMessages(messages);
+
+        status.textContent =
+          "Connected! Cloud database is working.";
+
+      } catch(error) {
+
+        console.error("Loading error:", error);
+
+        messageList.textContent =
+          "Unable to load messages.";
+
+        status.textContent =
+          "Database error: " + error.message;
+
+      }
+
+    }
+
+
+    // DISPLAY SAVED MESSAGES
+
+    function displayMessages(messages) {
+
+      messageList.replaceChildren();
+
+      if (messages.length === 0) {
+
+        messageList.textContent =
+          "No messages yet. Save your first message!";
+
+        return;
+
+      }
+
+      messages.forEach(function(item) {
+
+        const container = document.createElement("div");
+
+        container.className = "message-item";
+
+        const messageText = document.createElement("strong");
+
+        messageText.textContent = item.message;
+
+        const date = document.createElement("span");
+
+        date.className = "message-date";
+
+        date.textContent =
+          new Date(item.created_at).toLocaleString();
+
+        container.appendChild(messageText);
+
+        container.appendChild(date);
+
+        messageList.appendChild(container);
+
+      });
+
+    }
+
+
+    // REFRESH BUTTON
+
+    refreshButton.addEventListener("click", function() {
+
+      loadMessages();
+
+    });
+
   </script>
+
 </body>
 </html>
